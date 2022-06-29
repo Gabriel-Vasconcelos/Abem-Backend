@@ -11,7 +11,8 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    select: false
   },
   address: {
     type: String,
@@ -30,6 +31,10 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
   mothername: {
+    type: String,
+    required: true
+  },
+  genre: {
     type: String,
     required: true
   }

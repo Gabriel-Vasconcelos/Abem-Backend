@@ -2,6 +2,7 @@ const router = require("express").Router();
 const bcrypt = require("bcrypt");
 
 const User = require("../models/user");
+const Solicitation = require("../models/solicitation");
 
 // middlewares
 const verifyToken = require("../helpers/check-token");
@@ -55,7 +56,8 @@ router.put("/", verifyToken, async (req, res) => {
         cityandstate: req.body.cityandstate,
         cellphone: req.body.cellphone,
         birthdate: req.body.birthdate,
-        mothername: req.body.mothername
+        mothername: req.body.mothername,
+        genre: req.body.genre
       };
 
       // check if password match
@@ -93,7 +95,7 @@ router.put("/", verifyToken, async (req, res) => {
   
 });
 
-// resgatar usuários
+// get users
 router.get("/", async (req,res) =>{
 
   try{
@@ -110,7 +112,7 @@ router.get("/", async (req,res) =>{
 
 });
 
-// deletar usuário
+// delete user
 router.delete("/:id", async (req, res) => {
 
   const id = req.params.id;
@@ -128,7 +130,102 @@ router.delete("/:id", async (req, res) => {
 
     await User.deleteOne({_id: id})
 
-    res.status(200).json({ msg: "O usuário foi removido com sucesso!" })
+    res.status(200).json({ msg: "O usuário foi removido com sucesso!", user: user })
+
+  } catch(error){
+
+    res.status(500).json({ error: error })
+
+  }
+
+});
+
+// create solicitation
+router.post("/solicitation", verifyToken, async (req,res) =>{
+
+  const servicearea = req.body.servicearea;
+  const details = req.body.details;
+
+  // validations
+  if(servicearea == "null" || details == "null") {
+    return res.status(400).json({ error: "Preencha todos os campos." });
+  } 
+
+  // verify user 
+  const token = req.header("auth-token");
+
+  const userByToken = await getUserByToken(token);
+  
+  const userId = userByToken._id.toString();
+
+  try {
+
+    const user = await User.findOne({ _id: userId }, {cityandstate: 0, address: 0, cellphone: 0, birthdate: 0, mothername: 0, genre: 0});
+
+    const solicitation = new Solicitation({
+      servicearea: servicearea,
+      details: details,
+      userId: user._id.toString(),
+      user: user
+    
+    });
+
+    try {
+
+      const newSolicitation = await solicitation.save();
+      res.json({ error: null, msg: "Solicitação enviada com sucesso!", data: newSolicitation });
+
+    } catch(err) {
+
+      res.status(400).json({ error })
+
+    }
+
+  } catch(err) {
+
+    res.status(400).json({ error: "Acesso negado." })
+
+  }
+
+});
+
+// get solicitations
+
+router.get("/solicitation/all", verifyToken, async (req, res) => {
+
+  try { 
+    
+    const solicitations = await Solicitation.find().populate('user');
+    res.json({ error: null, solicitations: solicitations});
+
+  } catch (err) {
+
+    res.status(400).json({ error })
+      
+  }
+
+});
+
+
+// delete solicitation
+router.delete("/solicitation/:id", verifyToken, async (req, res) => {
+
+  const id = req.params.id;
+
+  const solicitation = await Solicitation.findOne({ _id: id });
+
+  if(!solicitation){
+
+    res.status(402).json({ msg: "Solicitação não foi encontrada!" })
+    return
+
+  }
+
+  try{
+
+    await Solicitation.deleteOne({_id: id})
+
+    res.status(200).json({ msg: "A solicitação foi removida com sucesso!", solicitation: solicitation})
 
   } catch(error){
 

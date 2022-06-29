@@ -16,9 +16,10 @@ router.post("/register", async (req, res) => {
     const cellphone = req.body.cellphone;
     const birthdate = req.body.birthdate;
     const mothername = req.body.mothername;
+    const genre = req.body.genre;
 
      // check for required fields
-     if(name == null || email == null || password == null || confirmpassword == null || address == null || cityandstate == null || cellphone == null || birthdate == null || mothername == null ) {
+     if(name == null || email == null || password == null || confirmpassword == null || address == null || cityandstate == null || cellphone == null || birthdate == null || mothername == null || genre == null ) {
         return res.status(400).json({ error: "Por favor, preencha todos os campos." });
     }
 
@@ -48,7 +49,8 @@ router.post("/register", async (req, res) => {
         cityandstate: cityandstate,
         cellphone: cellphone,
         birthdate: birthdate,
-        mothername: mothername
+        mothername: mothername,
+        genre: genre
 
     });
 
@@ -84,7 +86,7 @@ router.post("/login", async (req, res) => {
     const password = req.body.password;
 
     // check if user exists
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email: email }).select('+password');
 
     if (!user) {
         return res.status(400).json({ error: "Não há usuário cadastrado com este e-mail!" });
